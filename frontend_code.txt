@@ -1,0 +1,3159 @@
+### index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+### main.jsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+### App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './components/Auth/AuthContext';
+import Navbar from './components/Layout/Navbar';
+import Footer from './components/Layout/Footer';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import ResumeAnalysis from './pages/ResumeAnalysis';
+import './styles/main.css';
+
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
+function AppContent() {
+  return (
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analysis" 
+              element={
+                <ProtectedRoute>
+                  <ResumeAnalysis />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+export default App;
+
+### index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './styles/main.css'; // Ensure Tailwind styles are imported
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+### App.css
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+### pages/Login.jsx
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/Auth/AuthContext';
+
+const Login = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const { login, loading, error } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!username || !password) {
+      setLoginError('Please enter both username and password');
+      return;
+    }
+    
+    try {
+      const success = await login(username, password);
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setLoginError('Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setLoginError('Login failed. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Login to ResumeGPT</h2>
+        
+        {(loginError || error) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {loginError || error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-gray-700 font-medium mb-1">Username</label>
+            <input
+              type="text"
+              id="username"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-gray-700 font-medium mb-1">Password</label>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className={`w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-blue-600 hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+
+### pages/Dashboard.jsx
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import DashboardLayout from '../components/Layout/Dashboard';
+import Card from '../components/Common/Card';
+import Button from '../components/Common/Button';
+import { getUserStats, getRecentAnalyses } from '../services/resume';
+import { useAuth } from '../components/Auth/AuthContext';
+
+const Dashboard = () => {
+  const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [recentAnalyses, setRecentAnalyses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsData, analysesData] = await Promise.all([
+          getUserStats(),
+          getRecentAnalyses(5) // Get 5 most recent analyses
+        ]);
+        
+        setStats(statsData);
+        setRecentAnalyses(analysesData);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Dashboard statistics cards
+  const StatCard = ({ title, value, icon, color }) => (
+    <Card className="h-full" hoverable>
+      <div className="flex items-center">
+        <div className={`rounded-full p-3 mr-4 ${color}`}>
+          <i className={`${icon} text-white text-xl`}></i>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">{title}</p>
+          <h3 className="text-2xl font-bold">{value}</h3>
+        </div>
+      </div>
+    </Card>
+  );
+
+  return (
+    <DashboardLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.name || 'User'}!</h1>
+        <p className="text-gray-600">Here's an overview of your resume analysis activity.</p>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      ) : (
+        <>
+          {/* Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard 
+              title="Total Analyses" 
+              value={stats?.totalAnalyses || 0} 
+              icon="fas fa-file-alt" 
+              color="bg-blue-500"
+            />
+            <StatCard 
+              title="Jobs Matched" 
+              value={stats?.jobsMatched || 0} 
+              icon="fas fa-briefcase" 
+              color="bg-green-500"
+            />
+            <StatCard 
+              title="Skills Gap Found" 
+              value={stats?.skillsGap || 0} 
+              icon="fas fa-exclamation-circle" 
+              color="bg-yellow-500"
+            />
+            <StatCard 
+              title="Resume Score" 
+              value={`${stats?.averageScore || 0}%`} 
+              icon="fas fa-star" 
+              color="bg-purple-500"
+            />
+          </div>
+
+          {/* Recent Activity */}
+          <Card 
+            title="Recent Analyses" 
+            footer={
+              <Link to="/dashboard/history">
+                <Button variant="outline" size="sm">View All History</Button>
+              </Link>
+            }
+          >
+            {recentAnalyses.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-gray-500 mb-4">You haven't analyzed any resumes yet.</p>
+                <Link to="/resume-analysis">
+                  <Button>Analyze Your Resume</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {recentAnalyses.map((analysis) => (
+                  <div key={analysis.id} className="py-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{analysis.jobTitle || 'Job Analysis'}</p>
+                      <p className="text-sm text-gray-500">{new Date(analysis.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded mr-3">
+                        {analysis.matchScore}% Match
+                      </span>
+                      <Link to={`/resume-analysis/${analysis.id}`}>
+                        <Button variant="outline" size="sm">View</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </>
+      )}
+    </DashboardLayout>
+  );
+};
+
+export default Dashboard;
+
+### pages/Home.jsx
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Home = () => {
+  return (
+    <div className="bg-gray-50">
+      {/* Hero section */}
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10 pb-8 bg-gray-50 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+              <div className="sm:text-center lg:text-left">
+                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                  <span className="block">Optimize your resume with</span>
+                  <span className="block text-blue-600">AI technology</span>
+                </h1>
+                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                  Upload your resume, paste a job description, and get instant feedback on how to improve your chances of landing that interview.
+                </p>
+                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                  <div className="rounded-md shadow">
+                    <Link
+                      to="/analysis"
+                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                    >
+                      Get Started
+                    </Link>
+                  </div>
+                  <div className="mt-3 sm:mt-0 sm:ml-3">
+                    <Link
+                      to="/login"
+                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+                    >
+                      Login
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+        <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+          <img
+            className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
+            src="/resume-hero.jpg"
+            alt="Resume analysis illustration"
+          />
+        </div>
+      </div>
+
+      {/* Features section */}
+      <div className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center">
+            <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Enhance Your Job Application Process
+            </p>
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+              Our AI-powered resume analyzer gives you the edge in your job search.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            {/* <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10"> */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <div className="mt-5 text-center">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Resume Analysis</h3>
+                  <p className="mt-2 text-base text-gray-500">
+                    Upload your resume or paste its content to get instant analysis.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                  </svg>
+                </div>
+                <div className="mt-5 text-center">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Skills Matching</h3>
+                  <p className="mt-2 text-base text-gray-500">
+                    Compare your skills with job requirements and identify gaps.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="mt-5 text-center">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Personalized Suggestions</h3>
+                  <p className="mt-2 text-base text-gray-500">
+                    Get AI-powered recommendations to improve your resume and application.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-blue-600">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <span className="block">Ready to boost your job search?</span>
+            <span className="block text-blue-200">Start optimizing your resume today.</span>
+          </h2>
+          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+            <div className="inline-flex rounded-md shadow">
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Home;
+
+### pages/Register.jsx
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/Auth/AuthContext';
+
+const Register = () => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const { register, loading, error } = useAuth();
+  const navigate = useNavigate();
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate inputs
+    if (!username || !email || !password || !confirmPassword) {
+      setRegisterError('All fields are required');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      setRegisterError('Please enter a valid email address');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setRegisterError('Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 8) {
+      setRegisterError('Password must be at least 8 characters long');
+      return;
+    }
+    
+    try {
+      const success = await register(username, email, password);
+      if (success) {
+        navigate('/login');
+      } else {
+        setRegisterError('Registration failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      setRegisterError('Registration failed. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Create an Account</h2>
+        
+        {(registerError || error) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {registerError || error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-gray-700 font-medium mb-1">Username</label>
+            <input
+              type="text"
+              id="username"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="email" className="block text-gray-700 font-medium mb-1">Email</label>
+            <input
+              type="email"
+              id="email"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-gray-700 font-medium mb-1">Password</label>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-1">Confirm Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className={`w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            {loading ? 'Creating Account...' : 'Register'}
+          </button>
+        </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Log in
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Register;
+
+### pages/ResumeAnalysis.jsx
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import DashboardLayout from '../components/Layout/Dashboard';
+import Card from '../components/Common/Card';
+import Button from '../components/Common/Button';
+import Modal from '../components/Common/Modal';
+import ResumeUpload from '../components/Resume/ResumeUpload';
+import SkillsMatch from '../components/Resume/SkillsMatch';
+import Suggestions from '../components/Resume/Suggestions';
+// import { analyzeResume, uploadResumeFile } from '../services/resume';
+
+import { analyzeResume, uploadResume } from '../services/resume';
+
+
+const ResumeAnalysis = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [resumeText, setResumeText] = useState('');
+  const [resumeFile, setResumeFile] = useState(null);
+  const [jobDescription, setJobDescription] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [error, setError] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const handleTextInputChange = (e) => {
+    if (e.target.name === 'resumeText') {
+      setResumeText(e.target.value);
+    } else if (e.target.name === 'jobDescription') {
+      setJobDescription(e.target.value);
+    }
+  };
+
+  const handleFileUpload = (file) => {
+    setResumeFile(file);
+    setResumeText(''); // Clear text input when file is uploaded
+  };
+
+  const validateInputs = () => {
+    if ((!resumeText && !resumeFile) || !jobDescription) {
+      setError('Please provide both a resume (text or file) and a job description.');
+      return false;
+    }
+    setError(null);
+    return true;
+  };
+
+  const handleAnalyzeClick = async () => {
+    if (!validateInputs()) return;
+    
+    try {
+      setIsAnalyzing(true);
+      setError(null);
+      
+      let results;
+      if (resumeFile) {
+        // Use file upload API
+        const formData = new FormData();
+        formData.append('resume_file', resumeFile);
+        formData.append('job_description', jobDescription);
+        results = await uploadResumeFile(formData);
+      } else {
+        // Use text analysis API
+        results = await analyzeResume({
+          resume_text: resumeText,
+          job_description: jobDescription
+        });
+      }
+      
+      setAnalysisResults(results);
+      setStep(2);
+    } catch (err) {
+      console.error('Error analyzing resume:', err);
+      setError('Failed to analyze your resume. Please try again later.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSaveAndContinue = () => {
+    // Navigate to the analysis detail page after saving
+    navigate(`/resume-analysis/${analysisResults.id}`);
+  };
+
+  const handleStartNewAnalysis = () => {
+    if (analysisResults) {
+      setShowConfirmModal(true);
+    } else {
+      resetForm();
+    }
+  };
+
+  const resetForm = () => {
+    setStep(1);
+    setResumeText('');
+    setResumeFile(null);
+    setJobDescription('');
+    setAnalysisResults(null);
+    setError(null);
+    setShowConfirmModal(false);
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">
+          {step === 1 ? 'Resume Analysis' : 'Analysis Results'}
+        </h1>
+        <p className="text-gray-600">
+          {step === 1 
+            ? 'Upload your resume and a job description to see how well they match.' 
+            : 'Review your resume analysis and get suggestions for improvement.'}
+        </p>
+      </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+        </div>
+      )}
+
+      {step === 1 ? (
+        <Card>
+          <ResumeUpload
+            resumeText={resumeText}
+            jobDescription={jobDescription}
+            onTextChange={handleTextInputChange}
+            onFileUpload={handleFileUpload}
+            currentFile={resumeFile}
+          />
+          
+          <div className="mt-6 flex justify-end">
+            <Button 
+              onClick={handleAnalyzeClick} 
+              isLoading={isAnalyzing}
+              disabled={isAnalyzing}
+            >
+              Analyze Resume
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <>
+          {analysisResults && (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <SkillsMatch 
+                  matchedTechSkills={analysisResults.matched_tech_skills}
+                  matchedSoftSkills={analysisResults.matched_soft_skills}
+                  missingTechSkills={analysisResults.missing_tech_skills}
+                  missingSoftSkills={analysisResults.missing_soft_skills}
+                />
+              </div>
+              
+              <Suggestions suggestions={analysisResults.suggestions} />
+              
+              <div className="mt-8 flex justify-between">
+                <Button 
+                  variant="outline"
+                  onClick={handleStartNewAnalysis}
+                >
+                  Start New Analysis
+                </Button>
+                
+                <Button onClick={handleSaveAndContinue}>
+                  Save & Continue
+                </Button>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Start New Analysis"
+      >
+        <div className="mb-6">
+          <p>Are you sure you want to start a new analysis? Your current results will not be saved.</p>
+        </div>
+        <div className="flex justify-end space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowConfirmModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="primary"
+            onClick={resetForm}
+          >
+            Confirm
+          </Button>
+        </div>
+      </Modal>
+    </DashboardLayout>
+  );
+};
+
+export default ResumeAnalysis;
+
+### services/api.jsx
+import axios from 'axios';
+
+// Create an axios instance
+const API_URL = 'http://localhost:8000';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to add authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add response interceptor to handle common errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 Unauthorized errors (token expired)
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+
+### services/auth.jsx
+import api from './api';
+import { jwtDecode } from 'jwt-decode';
+
+const AuthService = {
+  // Login user
+  login: async (username, password) => {
+    try {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+      
+      const response = await api.post('/token', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      if (response.data.access_token) {
+        localStorage.setItem('token', response.data.access_token);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  },
+
+  // Register user
+  register: async (username, email, password) => {
+    try {
+      const response = await api.post('/users/', {
+        username,
+        email,
+        password
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  },
+
+  // Logout user
+  logout: () => {
+    localStorage.removeItem('token');
+  },
+
+  // Get current user
+  getCurrentUser: async () => {
+    try {
+      const response = await api.get('/users/me');
+      return response.data;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      throw error;
+    }
+  },
+
+  // Check if user is logged in
+  isLoggedIn: () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return false;
+    }
+    
+    try {
+      // Check if token is expired
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      
+      if (decoded.exp < currentTime) {
+        // Token expired
+        localStorage.removeItem('token');
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      localStorage.removeItem('token');
+      return false;
+    }
+  }
+};
+
+export default AuthService;
+
+### services/resume.jsx
+import api from './api';
+
+const ResumeService = {
+  // Upload resume file
+  uploadResume: async (file, name) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('name', name);
+      
+      const response = await api.post('/resume/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Resume upload error:', error);
+      throw error;
+    }
+  },
+
+  // Submit resume text
+  submitResumeText: async (name, textContent) => {
+    try {
+      const formData = new FormData();
+      formData.append('text_content', textContent);
+      formData.append('name', name);
+      
+      const response = await api.post('/resume/upload', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Resume text submission error:', error);
+      throw error;
+    }
+  },
+
+  // Analyze resume with job description
+  analyzeResume: async (resumeId, jobDescription) => {
+    try {
+      const formData = new FormData();
+      formData.append('job_description', jobDescription);
+      
+      const response = await api.post(`/resume/analyze/${resumeId}`, formData);
+      return response.data;
+    } catch (error) {
+      console.error('Resume analysis error:', error);
+      throw error;
+    }
+  },
+
+  // Analyze resume text directly
+  analyzeResumeText: async (resumeText, jobDescription) => {
+    try {
+      const formData = new FormData();
+      formData.append('resume_text', resumeText);
+      formData.append('job_description', jobDescription);
+      
+      const response = await api.post('/resume/analyze-text', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Resume text analysis error:', error);
+      throw error;
+    }
+  },
+
+  // Get user stats (missing function)
+  getUserStats: async () => {
+    try {
+      const response = await api.get('/resume/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Get user stats error:', error);
+      throw error;
+    }
+  },
+
+  // Get recent analyses (missing function)
+  getRecentAnalyses: async (limit = 5) => {
+    try {
+      const response = await api.get(`/resume/recent?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get recent analyses error:', error);
+      throw error;
+    }
+  },
+};
+
+// Export the entire service as default
+export default ResumeService;
+
+// Export individual functions
+export const {
+  uploadResume,
+  submitResumeText,
+  analyzeResume,
+  analyzeResumeText,
+  getUserStats,
+  getRecentAnalyses,
+} = ResumeService;
+
+### components/Common/Button.jsx
+import React from 'react';
+
+const Button = ({ 
+  children, 
+  onClick, 
+  type = 'button', 
+  className = '', 
+  variant = 'primary', 
+  size = 'md',
+  disabled = false,
+  fullWidth = false,
+  isLoading = false,
+  icon = null
+}) => {
+  // Variant styles
+  const variantClasses = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+    secondary: 'bg-gray-600 hover:bg-gray-700 text-white',
+    success: 'bg-green-600 hover:bg-green-700 text-white',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
+    warning: 'bg-yellow-500 hover:bg-yellow-600 text-white',
+    info: 'bg-blue-400 hover:bg-blue-500 text-white',
+    light: 'bg-gray-100 hover:bg-gray-200 text-gray-800',
+    dark: 'bg-gray-800 hover:bg-gray-900 text-white',
+    outline: 'bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white',
+    link: 'bg-transparent text-blue-600 hover:underline p-0',
+  };
+  
+  // Size styles
+  const sizeClasses = {
+    sm: 'text-sm py-1 px-3',
+    md: 'text-base py-2 px-4',
+    lg: 'text-lg py-3 px-6',
+  };
+
+  const baseClasses = 'font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150 ease-in-out';
+  const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+  const widthClass = fullWidth ? 'w-full' : '';
+  
+  const buttonClasses = `
+    ${baseClasses} 
+    ${variantClasses[variant]} 
+    ${sizeClasses[size]} 
+    ${disabledClasses} 
+    ${widthClass} 
+    ${className}
+  `.trim();
+  
+  return (
+    <button
+      type={type}
+      className={buttonClasses}
+      onClick={onClick}
+      disabled={disabled || isLoading}
+    >
+      {isLoading ? (
+        <span className="inline-flex items-center">
+          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading...
+        </span>
+      ) : (
+        <span className="inline-flex items-center">
+          {icon && <span className="mr-2">{icon}</span>}
+          {children}
+        </span>
+      )}
+    </button>
+  );
+};
+
+export default Button;
+
+### components/Common/Modal.jsx
+import React, { useEffect, useRef } from 'react';
+import Button from './Button';
+
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  footer,
+  size = 'md',
+  closeOnEsc = true,
+  closeOnOutsideClick = true,
+  showCloseButton = true
+}) => {
+  const modalRef = useRef(null);
+  
+  // Handle ESC key press
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape' && closeOnEsc) {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleEsc);
+    
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [closeOnEsc, onClose]);
+  
+  // Handle outside click
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        closeOnOutsideClick &&
+        modalRef.current && 
+        !modalRef.current.contains(event.target)
+      ) {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [closeOnOutsideClick, isOpen, onClose]);
+  
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+  
+  // Modal size classes
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
+    full: 'max-w-full'
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div 
+        ref={modalRef}
+        className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transition-all duration-300 transform`}
+      >
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              aria-label="Close"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        
+        {/* Modal Body */}
+        <div className="px-6 py-4">
+          {children}
+        </div>
+        
+        {/* Modal Footer */}
+        {footer && (
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-2">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Modal;
+
+### components/Common/Card.jsx
+import React from 'react';
+
+const Card = ({
+  children,
+  title,
+  subtitle,
+  className = '',
+  headerClassName = '',
+  bodyClassName = '',
+  footerClassName = '',
+  footer,
+  hoverable = false,
+  bordered = true,
+  shadow = 'md',
+  onHeaderClick = null
+}) => {
+  // Shadow classes
+  const shadowClasses = {
+    none: '',
+    sm: 'shadow-sm',
+    md: 'shadow',
+    lg: 'shadow-lg',
+    xl: 'shadow-xl',
+  };
+  
+  const baseClasses = 'bg-white rounded-lg overflow-hidden';
+  const hoverClasses = hoverable ? 'transition-all duration-200 hover:-translate-y-1 hover:shadow-lg' : '';
+  const borderClasses = bordered ? 'border border-gray-200' : '';
+  
+  return (
+    <div className={`${baseClasses} ${shadowClasses[shadow]} ${hoverClasses} ${borderClasses} ${className}`}>
+      {title && (
+        <div 
+          className={`px-6 py-4 border-b border-gray-200 ${headerClassName} ${onHeaderClick ? 'cursor-pointer' : ''}`}
+          onClick={onHeaderClick}
+        >
+          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+          {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
+        </div>
+      )}
+      
+      <div className={`px-6 py-4 ${bodyClassName}`}>
+        {children}
+      </div>
+      
+      {footer && (
+        <div className={`px-6 py-4 border-t border-gray-200 ${footerClassName}`}>
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Card;
+
+### components/Auth/AuthContext.jsx
+import { createContext, useState, useEffect, useContext } from 'react';
+import AuthService from '../../services/auth';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Check if user is logged in on mount
+  useEffect(() => {
+    const checkLoggedIn = async () => {
+      try {
+        if (AuthService.isLoggedIn()) {
+          const userData = await AuthService.getCurrentUser();
+          setUser(userData);
+        }
+      } catch (err) {
+        console.error('Error checking login status:', err);
+        setError('Error checking login status. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkLoggedIn();
+  }, []);
+
+  // Login
+  const login = async (username, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const success = await AuthService.login(username, password);
+      
+      if (success) {
+        const userData = await AuthService.getCurrentUser();
+        setUser(userData);
+        return true;
+      }
+      
+      return false;
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Login failed. Please try again.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Register
+  const register = async (username, email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await AuthService.register(username, email, password);
+      return true;
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logout
+  const logout = () => {
+    AuthService.logout();
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Custom hook to use auth context
+export const useAuth = () => useContext(AuthContext);
+
+export default AuthContext;
+
+### components/Auth/Login.jsx
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/Auth/AuthContext';
+
+const Login = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const { login, loading, error } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!username || !password) {
+      setLoginError('Please enter both username and password');
+      return;
+    }
+    
+    try {
+      const success = await login(username, password);
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setLoginError('Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setLoginError('Login failed. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Login to ResumeGPT</h2>
+        
+        {(loginError || error) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {loginError || error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-gray-700 font-medium mb-1">Username</label>
+            <input
+              type="text"
+              id="username"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-gray-700 font-medium mb-1">Password</label>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className={`w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-blue-600 hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+
+### components/Auth/Register.jsx
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/Auth/AuthContext';
+
+const Register = () => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const { register, loading, error } = useAuth();
+  const navigate = useNavigate();
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate inputs
+    if (!username || !email || !password || !confirmPassword) {
+      setRegisterError('All fields are required');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      setRegisterError('Please enter a valid email address');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setRegisterError('Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 8) {
+      setRegisterError('Password must be at least 8 characters long');
+      return;
+    }
+    
+    try {
+      const success = await register(username, email, password);
+      if (success) {
+        navigate('/login');
+      } else {
+        setRegisterError('Registration failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      setRegisterError('Registration failed. Please try again.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Create an Account</h2>
+        
+        {(registerError || error) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {registerError || error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-gray-700 font-medium mb-1">Username</label>
+            <input
+              type="text"
+              id="username"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="email" className="block text-gray-700 font-medium mb-1">Email</label>
+            <input
+              type="email"
+              id="email"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-gray-700 font-medium mb-1">Password</label>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-1">Confirm Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className={`w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            {loading ? 'Creating Account...' : 'Register'}
+          </button>
+        </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Log in
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Register;
+
+### components/Resume/ResumeAnalytics.jsx
+import React from 'react';
+import Card from '../Common/Card';
+
+const ResumeAnalytics = ({ matchData }) => {
+  // Check if we have valid data
+  if (!matchData || !matchData.techSkills || !matchData.softSkills) {
+    return (
+      <Card>
+        <div className="text-center py-6">
+          <p className="text-gray-500">No analytics data available yet.</p>
+        </div>
+      </Card>
+    );
+  }
+
+  const { techSkills, softSkills } = matchData;
+  
+  // Calculate percentages
+  const techTotal = techSkills.matched.length + techSkills.missing.length;
+  const techMatchPercentage = Math.round((techSkills.matched.length / techTotal) * 100) || 0;
+  
+  const softTotal = softSkills.matched.length + softSkills.missing.length;
+  const softMatchPercentage = Math.round((softSkills.matched.length / softTotal) * 100) || 0;
+  
+  // Helper function to get color based on percentage
+  const getBarColor = (percentage) => {
+    if (percentage >= 80) return 'bg-green-500';
+    if (percentage >= 60) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <Card>
+      <h2 className="text-2xl font-bold mb-6">Resume Analytics</h2>
+      
+      <div className="space-y-8">
+        {/* Technical Skills Chart */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium">Technical Skills Match</h3>
+            <span className="text-lg font-bold">{techMatchPercentage}%</span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div 
+              className={`h-4 rounded-full ${getBarColor(techMatchPercentage)}`} 
+              style={{ width: `${techMatchPercentage}%` }}
+            />
+          </div>
+          
+          <div className="flex justify-between mt-2 text-sm text-gray-600">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                <span className="text-sm">Matched: {techSkills.matched.length}</span>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                <span className="text-sm">Missing: {techSkills.missing.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Soft Skills Chart */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium">Soft Skills Match</h3>
+            <span className="text-lg font-bold">{softMatchPercentage}%</span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div 
+              className={`h-4 rounded-full ${getBarColor(softMatchPercentage)}`} 
+              style={{ width: `${softMatchPercentage}%` }}
+            />
+          </div>
+          
+          <div className="flex justify-between mt-2 text-sm text-gray-600">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                <span className="text-sm">Matched: {softSkills.matched.length}</span>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                <span className="text-sm">Missing: {softSkills.missing.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Skill Distribution Chart */}
+        <div>
+          <h3 className="text-lg font-medium mb-4">Overall Skill Distribution</h3>
+          
+          <div className="flex h-40 items-end space-x-2">
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-full bg-blue-500 rounded-t" style={{ height: `${(techSkills.matched.length / (techTotal + softTotal)) * 100}%` }}></div>
+              <span className="text-xs mt-1">Matched Technical</span>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-full bg-red-500 rounded-t" style={{ height: `${(techSkills.missing.length / (techTotal + softTotal)) * 100}%` }}></div>
+              <span className="text-xs mt-1">Missing Technical</span>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-full bg-green-500 rounded-t" style={{ height: `${(softSkills.matched.length / (techTotal + softTotal)) * 100}%` }}></div>
+              <span className="text-xs mt-1">Matched Soft</span>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-full bg-yellow-500 rounded-t" style={{ height: `${(softSkills.missing.length / (techTotal + softTotal)) * 100}%` }}></div>
+              <span className="text-xs mt-1">Missing Soft</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+export default ResumeAnalytics;
+
+### components/Resume/SkillsMatch.jsx
+import React from 'react';
+import Card from '../Common/Card';
+
+const SkillsMatch = ({ matchData }) => {
+  // Ensure we have valid data
+  if (!matchData || !matchData.techSkills || !matchData.softSkills) {
+    return (
+      <Card>
+        <div className="text-center py-6">
+          <p className="text-gray-500">No skills matching data available yet.</p>
+        </div>
+      </Card>
+    );
+  }
+
+  const { techSkills, softSkills } = matchData;
+
+  // Calculate match percentages
+  const techMatchPercentage = Math.round((techSkills.matched.length / 
+    (techSkills.matched.length + techSkills.missing.length)) * 100) || 0;
+  
+  const softMatchPercentage = Math.round((softSkills.matched.length / 
+    (softSkills.matched.length + softSkills.missing.length)) * 100) || 0;
+  
+  const overallMatchPercentage = Math.round((techMatchPercentage + softMatchPercentage) / 2);
+
+  // Function to determine color based on percentage
+  const getMatchColor = (percentage) => {
+    if (percentage >= 80) return 'text-green-600';
+    if (percentage >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getMatchBgColor = (percentage) => {
+    if (percentage >= 80) return 'bg-green-100 border-green-500';
+    if (percentage >= 60) return 'bg-yellow-100 border-yellow-500';
+    return 'bg-red-100 border-red-500';
+  };
+
+  return (
+    <Card>
+      <h2 className="text-2xl font-bold mb-6">Skills Match Analysis</h2>
+      
+      {/* Overall Match Score */}
+      <div className={`mb-8 p-4 border-l-4 ${getMatchBgColor(overallMatchPercentage)}`}>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-medium">Overall Match:</span>
+          <span className={`text-xl font-bold ${getMatchColor(overallMatchPercentage)}`}>
+            {overallMatchPercentage}%
+          </span>
+        </div>
+      </div>
+      
+      {/* Technical Skills Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold">Technical Skills</h3>
+          <span className={`font-bold ${getMatchColor(techMatchPercentage)}`}>
+            {techMatchPercentage}% match
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Matched Technical Skills */}
+          <div className="border rounded-md p-4">
+            <h4 className="font-medium text-green-600 mb-2">Matched Skills</h4>
+            {techSkills.matched.length > 0 ? (
+              <ul className="list-disc list-inside">
+                {techSkills.matched.map((skill, index) => (
+                  <li key={index} className="mb-1 text-gray-700">{skill}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 italic">No matched technical skills found</p>
+            )}
+          </div>
+          
+          {/* Missing Technical Skills */}
+          <div className="border rounded-md p-4">
+            <h4 className="font-medium text-red-600 mb-2">Missing Skills</h4>
+            {techSkills.missing.length > 0 ? (
+              <ul className="list-disc list-inside">
+                {techSkills.missing.map((skill, index) => (
+                  <li key={index} className="mb-1 text-gray-700">{skill}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 italic">No missing technical skills detected</p>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Soft Skills Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold">Soft Skills</h3>
+          <span className={`font-bold ${getMatchColor(softMatchPercentage)}`}>
+            {softMatchPercentage}% match
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Matched Soft Skills */}
+          <div className="border rounded-md p-4">
+            <h4 className="font-medium text-green-600 mb-2">Matched Skills</h4>
+            {softSkills.matched.length > 0 ? (
+              <ul className="list-disc list-inside">
+                {softSkills.matched.map((skill, index) => (
+                  <li key={index} className="mb-1 text-gray-700">{skill}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 italic">No matched soft skills found</p>
+            )}
+          </div>
+          
+          {/* Missing Soft Skills */}
+          <div className="border rounded-md p-4">
+            <h4 className="font-medium text-red-600 mb-2">Missing Skills</h4>
+            {softSkills.missing.length > 0 ? (
+              <ul className="list-disc list-inside">
+                {softSkills.missing.map((skill, index) => (
+                  <li key={index} className="mb-1 text-gray-700">{skill}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 italic">No missing soft skills detected</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+export default SkillsMatch;
+
+### components/Resume/Suggestions.jsx
+import React from 'react';
+import Card from '../Common/Card';
+
+const Suggestions = ({ suggestions }) => {
+  // Check if we have valid suggestions
+  if (!suggestions || !Array.isArray(suggestions) || suggestions.length === 0) {
+    return (
+      <Card>
+        <div className="text-center py-6">
+          <p className="text-gray-500">No suggestions available yet.</p>
+        </div>
+      </Card>
+    );
+  }
+
+  // Group suggestions by section
+  const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
+    const { section } = suggestion;
+    if (!acc[section]) {
+      acc[section] = [];
+    }
+    acc[section].push(suggestion);
+    return acc;
+  }, {});
+
+  return (
+    <Card>
+      <h2 className="text-2xl font-bold mb-6">Improvement Suggestions</h2>
+      
+      <div className="space-y-8">
+        {Object.entries(groupedSuggestions).map(([section, sectionSuggestions]) => (
+          <div key={section} className="border-b pb-6 last:border-b-0 last:pb-0">
+            <h3 className="text-xl font-semibold mb-4 text-blue-600">{section}</h3>
+            
+            <ul className="space-y-4">
+              {sectionSuggestions.map((suggestion, index) => (
+                <li key={index} className="bg-blue-50 p-4 rounded-md">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-md font-medium text-gray-800">{suggestion.title}</h4>
+                      <p className="mt-1 text-gray-600">{suggestion.description}</p>
+                      
+                      {suggestion.examples && suggestion.examples.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-gray-700">Examples:</p>
+                          <ul className="list-disc list-inside mt-1 pl-2 text-sm text-gray-600">
+                            {suggestion.examples.map((example, idx) => (
+                              <li key={idx}>{example}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {suggestion.priority && (
+                        <span className={`inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          suggestion.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          suggestion.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {suggestion.priority.charAt(0).toUpperCase() + suggestion.priority.slice(1)} Priority
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+};
+
+export default Suggestions;
+
+### components/Resume/ResumeUpload.jsx
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Button from '../Common/Button';
+import Card from '../Common/Card';
+
+const ResumeUpload = ({ setAnalysisData }) => {
+  const [resumeText, setResumeText] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
+  const [resumeFile, setResumeFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setResumeFile(file);
+      
+      // Read text from file
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setResumeText(event.target.result);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!resumeText && !resumeFile) {
+      setError('Please provide your resume text or upload a resume file');
+      return;
+    }
+    
+    if (!jobDescription) {
+      setError('Please provide a job description');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      // Create form data to send
+      const formData = new FormData();
+      formData.append('resumeText', resumeText);
+      formData.append('jobDescription', jobDescription);
+      if (resumeFile) {
+        formData.append('resumeFile', resumeFile);
+      }
+      
+      // Send to API
+      const response = await fetch('http://localhost:8000/api/resume/analyze', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to analyze resume');
+      }
+      
+      const data = await response.json();
+      
+      // Store analysis results
+      setAnalysisData(data);
+      
+      // Navigate to results page
+      navigate('/analysis/results');
+      
+    } catch (err) {
+      setError(err.message || 'An error occurred during analysis');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <h2 className="text-2xl font-bold mb-4">Resume Analysis</h2>
+      <p className="text-gray-600 mb-6">
+        Upload your resume and paste a job description to get personalized feedback and skills matching analysis.
+      </p>
+      
+      {error && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+          <p>{error}</p>
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Upload Resume (PDF, DOCX, or TXT)
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt"
+            onChange={handleFileChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Or paste your resume text
+          </label>
+          <textarea
+            value={resumeText}
+            onChange={(e) => setResumeText(e.target.value)}
+            rows={10}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Paste your resume content here..."
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Job Description
+          </label>
+          <textarea
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            rows={8}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Paste the job description here..."
+          />
+        </div>
+        
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full"
+        >
+          {isLoading ? 'Analyzing...' : 'Analyze Resume'}
+        </Button>
+      </form>
+    </Card>
+  );
+};
+
+export default ResumeUpload;
+
+### components/Layout/Footer.jsx
+import React from 'react';
+
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  
+  return (
+    <footer className="bg-gray-800 text-white py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="mb-4 md:mb-0">
+            <h2 className="text-xl font-bold">ResumeGPT</h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Optimize your resume for job applications with AI
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-center md:items-end">
+            <p className="text-sm text-gray-400">
+              &copy; {currentYear} ResumeGPT. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
+
+### components/Layout/Navbar.jsx
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../Auth/AuthContext';
+
+const Navbar = () => {
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <nav className="bg-blue-600 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="text-white text-xl font-bold">
+                ResumeGPT
+              </Link>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link
+                to="/"
+                className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Home
+              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/analysis"
+                    className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    New Analysis
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-white text-sm">Hello, {user?.username}</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-white text-blue-600 hover:bg-gray-200 px-4 py-1 rounded-md text-sm font-medium"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/login"
+                  className="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="bg-white text-blue-600 hover:bg-gray-200 px-4 py-1 rounded-md text-sm font-medium"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile menu button */}
+          <div className="flex items-center sm:hidden">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-gray-200 focus:outline-none"
+              aria-controls="mobile-menu"
+              aria-expanded="false"
+            >
+              <span className="sr-only">Open main menu</span>
+              {/* Icon when menu is closed */}
+              <svg
+                className="block h-6 w-6"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile menu, show/hide based on menu state */}
+      <div className="sm:hidden" id="mobile-menu">
+        <div className="px-2 pt-2 pb-3 space-y-1">
+          <Link
+            to="/"
+            className="text-white block px-3 py-2 rounded-md text-base font-medium"
+          >
+            Home
+          </Link>
+          {isAuthenticated && (
+            <>
+              <Link
+                to="/dashboard"
+                className="text-white block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/analysis"
+                className="text-white block px-3 py-2 rounded-md text-base font-medium"
+              >
+                New Analysis
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-white block w-full text-left px-3 py-2 rounded-md text-base font-medium"
+              >
+                Logout
+              </button>
+            </>
+          )}
+          {!isAuthenticated && (
+            <>
+              <Link
+                to="/login"
+                className="text-white block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="text-white block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
+
+### components/Layout/Dashboard.jsx
+import React, { useState } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import Navbar from './Navbar';
+import Footer from './Footer';
+
+const Dashboard = ({ children }) => {
+  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const sidebarItems = [
+    { label: 'Overview', path: '/dashboard', icon: 'fas fa-home' },
+    { label: 'New Analysis', path: '/resume-analysis', icon: 'fas fa-file-alt' },
+    { label: 'History', path: '/dashboard/history', icon: 'fas fa-history' },
+    { label: 'Settings', path: '/dashboard/settings', icon: 'fas fa-cog' },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+
+      <div className="flex flex-1">
+        {/* Sidebar - hidden on mobile unless toggled */}
+        <div className={`bg-gray-800 text-white w-64 fixed h-full transition-all duration-300 z-10 lg:static lg:block ${isMenuOpen ? 'left-0' : '-left-64 lg:left-0'}`}>
+          <div className="p-4 border-b border-gray-700">
+            <h2 className="text-xl font-semibold">ResumeGPT</h2>
+          </div>
+          <nav className="mt-4">
+            <ul>
+              {sidebarItems.map((item, index) => (
+                <li key={index} className="mb-2">
+                  <Link 
+                    to={item.path} 
+                    className={`flex items-center px-4 py-3 hover:bg-gray-700 ${location.pathname === item.path ? 'bg-gray-700' : ''}`}
+                  >
+                    <i className={`${item.icon} mr-3`}></i>
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        {/* Mobile menu button */}
+        <button 
+          className="lg:hidden fixed bottom-4 right-4 bg-primary text-white p-3 rounded-full shadow-lg z-20"
+          onClick={toggleMenu}
+        >
+          <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
+        </button>
+
+        {/* Main content */}
+        <div className="flex-1 p-6 lg:pl-6">
+          <div className="container mx-auto">
+            {children}
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+### utils/helpers.jsx
+/**
+ * Utility functions for the ResumeGPT application
+ */
+
+/**
+ * Format a date to a readable string
+ * @param {Date|string} date - Date to format
+ * @param {Object} options - Options for formatting
+ * @returns {string} Formatted date string
+ */
+export const formatDate = (date, options = {}) => {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    
+    const defaultOptions = {
+      format: 'medium', // 'short', 'medium', 'long', 'full'
+      includeTime: false,
+    };
+    
+    const opts = { ...defaultOptions, ...options };
+    
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+    
+    let dateTimeFormat;
+    
+    switch (opts.format) {
+      case 'short':
+        dateTimeFormat = new Intl.DateTimeFormat('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit',
+          ...(opts.includeTime ? { hour: 'numeric', minute: 'numeric' } : {})
+        });
+        break;
+      case 'medium':
+        dateTimeFormat = new Intl.DateTimeFormat('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          ...(opts.includeTime ? { hour: 'numeric', minute: 'numeric' } : {})
+        });
+        break;
+      case 'long':
+        dateTimeFormat = new Intl.DateTimeFormat('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          ...(opts.includeTime ? { hour: 'numeric', minute: 'numeric', second: 'numeric' } : {})
+        });
+        break;
+      case 'full':
+        dateTimeFormat = new Intl.DateTimeFormat('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          ...(opts.includeTime ? { hour: 'numeric', minute: 'numeric', second: 'numeric' } : {})
+        });
+        break;
+      default:
+        dateTimeFormat = new Intl.DateTimeFormat('en-US');
+    }
+    
+    return dateTimeFormat.format(dateObj);
+  };
+  
+  /**
+   * Truncate text to a specified length
+   * @param {string} text - Text to truncate
+   * @param {number} maxLength - Maximum length
+   * @returns {string} Truncated text
+   */
+  export const truncateText = (text, maxLength = 100) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+  
+  /**
+   * Calculate the percentage match between two sets of skills
+   * @param {Array} userSkills - User's skills
+   * @param {Array} requiredSkills - Required skills for the job
+   * @returns {number} Percentage match
+   */
+  export const calculateSkillMatchPercentage = (userSkills, requiredSkills) => {
+    if (!userSkills || !requiredSkills || requiredSkills.length === 0) return 0;
+    
+    const matches = requiredSkills.filter(skill => 
+      userSkills.some(userSkill => 
+        userSkill.toLowerCase().includes(skill.toLowerCase()) || 
+        skill.toLowerCase().includes(userSkill.toLowerCase())
+      )
+    );
+    
+    return Math.round((matches.length / requiredSkills.length) * 100);
+  };
+  
+  /**
+   * Extract the file extension from a filename
+   * @param {string} filename - Filename to extract extension from
+   * @returns {string} File extension (without the dot)
+   */
+  export const getFileExtension = (filename) => {
+    if (!filename) return '';
+    return filename.split('.').pop().toLowerCase();
+  };
+  
+  /**
+   * Check if a file is a valid resume file type
+   * @param {File} file - File to check
+   * @returns {boolean} Whether the file is a valid resume file
+   */
+  export const isValidResumeFile = (file) => {
+    if (!file) return false;
+    
+    const allowedTypes = ['pdf', 'doc', 'docx', 'txt', 'rtf'];
+    const extension = getFileExtension(file.name);
+    
+    return allowedTypes.includes(extension);
+  };
+  
+  /**
+   * Format file size to a human-readable string
+   * @param {number} bytes - Size in bytes
+   * @returns {string} Formatted size
+   */
+  export const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  /**
+   * Debounce function to limit how often a function is called
+   * @param {Function} func - Function to debounce
+   * @param {number} wait - Milliseconds to wait
+   * @returns {Function} Debounced function
+   */
+  export const debounce = (func, wait = 300) => {
+    let timeout;
+    
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+  
+  /**
+   * Generate a unique ID
+   * @returns {string} Unique ID
+   */
+  export const generateUniqueId = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  };
+
+### utils/constants.jsx
+/**
+ * Application-wide constants for ResumeGPT
+ */
+
+// API Endpoints
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+export const API_ENDPOINTS = {
+  // Auth endpoints
+  LOGIN: '/auth/login',
+  REGISTER: '/auth/register',
+  REFRESH_TOKEN: '/auth/refresh-token',
+  LOGOUT: '/auth/logout',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
+  
+  // Resume endpoints
+  ANALYZE_RESUME: '/resume/analyze',
+  UPLOAD_RESUME: '/resume/upload',
+  GET_HISTORY: '/resume/history',
+  GET_ANALYSIS: '/resume/analysis',
+  DELETE_ANALYSIS: '/resume/analysis',
+  
+  // User endpoints
+  GET_USER_PROFILE: '/users/me',
+  UPDATE_USER_PROFILE: '/users/me',
+  CHANGE_PASSWORD: '/users/password',
+};
+
+// Local storage keys
+export const STORAGE_KEYS = {
+  AUTH_TOKEN: 'resumegpt_auth_token',
+  USER_DATA: 'resumegpt_user',
+  THEME: 'resumegpt_theme',
+  ANALYTICS_CONSENT: 'resumegpt_analytics_consent',
+};
+
+// File upload constraints
+export const UPLOAD_CONSTRAINTS = {
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  ALLOWED_FILE_TYPES: [
+    'application/pdf', 
+    'application/msword', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+    'application/rtf',
+  ],
+  ALLOWED_EXTENSIONS: ['.pdf', '.doc', '.docx', '.txt', '.rtf'],
+};
+
+// Skill categories
+export const SKILL_CATEGORIES = {
+  TECHNICAL: 'technical',
+  SOFT: 'soft',
+};
+
+// Skill match levels
+export const MATCH_LEVELS = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+  NONE: 'none',
+};
+
+// Color schemes for UI elements
+export const COLORS = {
+  PRIMARY: '#3B82F6', // Blue
+  SECONDARY: '#6B7280', // Gray
+  SUCCESS: '#10B981', // Green
+  DANGER: '#EF4444', // Red
+  WARNING: '#F59E0B', // Amber
+  INFO: '#3B82F6', // Blue
+  LIGHT: '#F3F4F6', // Light Gray
+  DARK: '#1F2937', // Dark Gray
+  
+  // Skill match colors
+  MATCH_HIGH: '#10B981', // Green
+  MATCH_MEDIUM: '#F59E0B', // Amber
+  MATCH_LOW: '#EF4444', // Red
+  
+  // Chart colors
+  CHART_COLORS: [
+    '#3B82F6', // Blue
+    '#10B981', // Green
+    '#F59E0B', // Amber
+    '#EF4444', // Red
+    '#8B5CF6', // Purple
+    '#EC4899', // Pink
+    '#F97316', // Orange
+    '#14B8A6', // Teal
+  ],
+};
+
+// Animation durations
+export const ANIMATION = {
+  FAST: 200,
+  NORMAL: 300,
+  SLOW: 500,
+};
+
+// Breakpoints for responsive design
+export const BREAKPOINTS = {
+  SM: 640,
+  MD: 768,
+  LG: 1024,
+  XL: 1280,
+  '2XL': 1536,
+};
+
+// Default pagination settings
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 10,
+  PAGE_SIZE_OPTIONS: [5, 10, 20, 50],
+};
+
+// Notification settings
+export const NOTIFICATION = {
+  AUTO_DISMISS_DURATION: 5000, // 5 seconds
+  POSITION: 'top-right',
+};
+
+// Form validation error messages
+export const VALIDATION_ERRORS = {
+  REQUIRED: 'This field is required',
+  EMAIL: 'Please enter a valid email address',
+  PASSWORD_LENGTH: 'Password must be at least 8 characters long',
+  PASSWORD_MATCH: 'Passwords do not match',
+  FILE_SIZE: 'File size exceeds the maximum limit',
+  FILE_TYPE: 'File type is not supported',
+};
+
+### styles/main.css
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* Custom variables */
+:root {
+  --primary-color: #3B82F6;
+  --secondary-color: #6B7280;
+  --success-color: #10B981;
+  --danger-color: #EF4444;
+  --warning-color: #F59E0B;
+  --info-color: #3B82F6;
+  --light-color: #F3F4F6;
+  --dark-color: #1F2937;
+}
+
+/* Global styles */
+html, body {
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  @apply bg-gray-50 text-gray-800;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold tracking-tight;
+}
+
+h1 {
+  @apply text-3xl;
+}
+
+h2 {
+  @apply text-2xl;
+}
+
+h3 {
+  @apply text-xl;
+}
+
+h4 {
+  @apply text-lg;
+}
+
+p {
+  @apply leading-relaxed;
+}
+
+a {
+  @apply text-blue-600 hover:text-blue-800 transition-colors;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Dashboard related styles */
+.dashboard-container {
+  @apply flex flex-col min-h-screen;
+}
+
+.dashboard-content {
+  @apply flex flex-1;
+}
+
+.dashboard-main {
+  @apply flex-1 p-6 overflow-auto;
+}
+
+/* Form styles */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-input {
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-error {
+  @apply mt-1 text-sm text-red-600;
+}
+
+.form-helper {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+/* Button variations */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 hover:bg-gray-700 text-white;
+}
+
+.btn-success {
+  @apply bg-green-600 hover:bg-green-700 text-white;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white;
+}
+
+.btn-warning {
+  @apply bg-yellow-500 hover:bg-yellow-600 text-white;
+}
+
+.btn-info {
+  @apply bg-blue-400 hover:bg-blue-500 text-white;
+}
+
+.btn-light {
+  @apply bg-gray-100 hover:bg-gray-200 text-gray-800;
+}
+
+.btn-dark {
+  @apply bg-gray-800 hover:bg-gray-900 text-white;
+}
+
+.btn-outline {
+  @apply bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white;
+}
+
+.btn-link {
+  @apply bg-transparent text-blue-600 hover:underline p-0;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white rounded-lg shadow overflow-hidden;
+}
+
+.card-header {
+  @apply px-6 py-4 border-b border-gray-200;
+}
+
+.card-body {
+  @apply px-6 py-4;
+}
+
+.card-footer {
+  @apply px-6 py-4 border-t border-gray-200;
+}
+
+/* Table styles */
+.table-container {
+  @apply overflow-x-auto;
+}
+
+.table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+.table-header {
+  @apply bg-gray-50;
+}
+
+.table-header-cell {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table-body {
+  @apply bg-white divide-y divide-gray-200;
+}
+
+.table-row {
+  @apply hover:bg-gray-50;
+}
+
+.table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+}
+
+/* Skill match specific styles */
+.skill-match {
+  @apply px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.skill-match-high {
+  @apply bg-green-100 text-green-800;
+}
+
+.skill-match-medium {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.skill-match-low {
+  @apply bg-red-100 text-red-800;
+}
+
+.skill-tag {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2 mb-2;
+}
+
+/* Progress bar */
+.progress-container {
+  @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.progress-bar {
+  @apply h-full transition-all duration-300;
+}
+
+/* Auth forms */
+.auth-container {
+  @apply min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8;
+}
+
+.auth-form {
+  @apply max-w-md w-full space-y-8;
+}
+
+.auth-form-header {
+  @apply text-center;
+}
+
+.auth-form-footer {
+  @apply flex justify-between items-center text-sm;
+}
+
+/* Resume upload area */
+.upload-area {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer;
+}
+
+.upload-area-active {
+  @apply border-blue-500 bg-blue-50;
+}
+
+/* Resume analysis results */
+.result-section {
+  @apply mb-6;
+}
+
+.result-title {
+  @apply text-lg font-medium mb-2;
+}
+
+.skill-list {
+  @apply space-y-2;
+}
+
+.suggestion-item {
+  @apply py-3 border-b border-gray-200 last:border-0;
+}
+
+/* Responsiveness tweaks */
+@media (max-width: 640px) {
+  .hide-on-mobile {
+    display: none;
+  }
+  
+  .mobile-full-width {
+    width: 100% !important;
+  }
+  
+  .table-cell {
+    @apply px-2 py-2;
+  }
+}
+
+/* Dark mode */
+.dark {
+  @apply bg-gray-900 text-white;
+}
+
+.dark .card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.dark .form-input {
+  @apply bg-gray-700 border-gray-600 text-white;
+}
+
+.dark .table-header {
+  @apply bg-gray-800;
+}
+
+.dark .table-body {
+  @apply bg-gray-800;
+}
+
+.dark .table-row {
+  @apply hover:bg-gray-700;
+}
+
+.dark .table-cell {
+  @apply text-gray-300;
+}
+
+.dark .upload-area {
+  @apply border-gray-600;
+}
+
+.dark .upload-area-active {
+  @apply border-blue-500 bg-gray-800;
+}
+
