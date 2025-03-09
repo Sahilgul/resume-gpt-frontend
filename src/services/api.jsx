@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// Create an axios instance
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://resumegpt-service-157623494598.us-central1.run.app';
 
 // Create axios instance with default config
 const api = axios.create({
