@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'https://resumegpt-service-157623494598.us-central1.run.app';
+// const API_URL = 'https://resumegpt-service-157623494598.us-central1.run.app';
+const API_URL = 'http://127.0.0.1:8000/';
 
 // Create axios instance with default config
 const api = axios.create({
