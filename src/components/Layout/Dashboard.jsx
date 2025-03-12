@@ -13,14 +13,14 @@ const Dashboard = ({ children }) => {
 
   const sidebarItems = [
     { label: 'Overview', path: '/dashboard', icon: 'fas fa-home' },
-    { label: 'New Analysis', path: '/resume-analysis', icon: 'fas fa-file-alt' },
-    { label: 'History', path: '/dashboard/history', icon: 'fas fa-history' },
+    { label: 'New Analysis', path: '/analysis', icon: 'fas fa-file-alt' },
+    { label: 'History', path: '/history', icon: 'fas fa-history' },
     { label: 'Settings', path: '/dashboard/settings', icon: 'fas fa-cog' },
   ];
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      {/* <Navbar /> */}
 
       <div className="flex flex-1">
         {/* Sidebar - hidden on mobile unless toggled */}

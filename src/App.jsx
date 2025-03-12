@@ -9,7 +9,13 @@
   import Dashboard from './pages/Dashboard';
   import ResumeAnalysis from './pages/ResumeAnalysis';
   import './styles/main.css';
-  import { ResumeProvider } from './components/Resume/ResumeContext';
+
+import AnalysisResults from './components/Resume/AnalysisResults'
+
+import History from './pages/History'; 
+import UserSettings from './pages/UserSettings'; 
+// import UserSettings from './pages/UserSettings';
+
 
   // Protected Route component
   const ProtectedRoute = ({ children }) => {
@@ -52,6 +58,31 @@
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+              path="/history" 
+              element={
+                <ProtectedRoute>
+                  <History />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/dashboard/settings" 
+              element={
+                <ProtectedRoute>
+                  <UserSettings />
+                </ProtectedRoute>
+              } 
+            />
+
+
+<Route path="/analysis/results" element={
+            <ProtectedRoute>
+              <AnalysisResults />
+            </ProtectedRoute>
+          } />
+
             </Routes>
           </main>
           <Footer />

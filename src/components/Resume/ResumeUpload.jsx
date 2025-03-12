@@ -3,15 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../Common/Button';
 import Card from '../Common/Card';
 
-// const ResumeUpload = ({ setAnalysisData }) => {
-//   const [resumeText, setResumeText] = useState('');
-//   const [jobDescription, setJobDescription] = useState('');
-//   const [resumeFile, setResumeFile] = useState(null);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [error, setError] = useState('');
-//   const navigate = useNavigate();
-//   const [analysisData, setAnalysisData] = useState(null);
-
 const ResumeUpload = () => {
   const [resumeText, setResumeText] = useState('');
   const [jobDescription, setJobDescription] = useState('');
@@ -88,65 +79,6 @@ const ResumeUpload = () => {
     }
   };
 
-  //   const handleSubmit = async (e) => {
-  //     e.preventDefault();
-
-  //     if (!resumeText && !resumeFile) {
-  //         setError('Please provide your resume text or upload a resume file');
-  //         return;
-  //     }
-
-  //     if (!jobDescription) {
-  //         setError('Please provide a job description');
-  //         return;
-  //     }
-
-  //     setIsLoading(true);
-  //     setError('');
-
-  //     try {
-  //         // Retrieve the Bearer token
-  //         const token = localStorage.getItem("token");
-  //         if (!token) {
-  //             throw new Error("Unauthorized: No token found");
-  //         }
-
-  //         // Create FormData
-  //         const formData = new FormData();
-  //         formData.append('job_description', jobDescription);
-  //         if (resumeFile) {
-  //             formData.append('resume_file', resumeFile); // Use the correct key expected by FastAPI
-  //         } else {
-  //             formData.append('resume_text', resumeText);
-  //         }
-
-  //         // Send API request with the Authorization header
-  //         const response = await fetch('http://localhost:8000/resume/analyze-text', {
-  //             method: 'POST',
-  //             body: formData,
-  //             headers: {
-  //                 "Authorization": `Bearer ${token}`, // Attach the token
-  //             }
-  //         });
-
-  //         if (!response.ok) {
-  //             throw new Error(`Failed to analyze resume: ${response.statusText}`);
-  //         }
-
-  //         const data = await response.json();
-
-  //         // Store analysis results
-  //         setAnalysisData(data);
-
-  //         // Navigate to results page
-  //         navigate('/analysis/results');
-
-  //     } catch (err) {
-  //         setError(err.message || 'An error occurred during analysis');
-  //     } finally {
-  //         setIsLoading(false);
-  //     }
-  // };
 
   return (
     <Card>

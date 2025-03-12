@@ -99,7 +99,7 @@ const Dashboard = () => {
           <Card 
             title="Recent Analyses" 
             footer={
-              <Link to="/dashboard/history">
+              <Link to="/history">
                 <Button variant="outline" size="sm">View All History</Button>
               </Link>
             }
